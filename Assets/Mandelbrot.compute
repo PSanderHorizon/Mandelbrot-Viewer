@@ -1,0 +1,187 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Result;
+
+// Mandelbrot set Data
+struct data {
+    double r, i, widthRatio, heightRatio;
+};
+
+StructuredBuffer<data> buffer;
+uint iterations;
+
+[numthreads(32, 32, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+	double zReal, zImag;
+	double zReal2, zImag2;
+	double cReal, cImag;
+	double xOffset = (double)id.x * buffer[0].widthRatio;
+	double yOffset = (double)id.y * buffer[0].heightRatio;
+
+	uint iterationCount = 0;
+	float4 color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	
+	cReal = buffer[0].r + xOffset;
+	cImag = buffer[0].i + yOffset;
+
+	zReal = cReal;
+	zImag = cImag;
+
+	zImag2 = zImag * zImag;
+	
+	//Cardioid bulb checking
+	double q = (zReal - 0.25) * (zReal - 0.25) + zImag2;
+	if (q * (q + (zReal - 0.25)) <= 0.25 * zImag2)
+	{
+		Result[id.xy] = color;
+		return;
+	}
+
+	for (uint i = 0; i < iterations; i++)
+	{
+		zReal2 = zReal * zReal;
+		zImag2 = zImag * zImag;
+
+		if (zReal2 + zImag2 > 4.0) // unrapping sqrt(a^2 + b^2) > 2
+		{
+			break;
+		}
+		else {
+			zImag = (zReal + zReal) * zImag + cImag; // Unwrapping the squaring operation
+			zReal = zReal2 - zImag2 + cReal;
+			iterationCount++;
+		}
+	}
+
+	// If we hit the limit, include in the Mandelbrot set
+	if (iterationCount == iterations) {
+		Result[id.xy] = color;
+		return;
+	}
+
+		int colorNr = iterationCount % 16;
+
+	switch (colorNr)
+	{
+		case 0:
+		{
+			color[0] = 66.0f / 255.0f;
+			color[1] = 30.0f / 255.0f;
+			color[2] = 15.0f / 255.0f;
+
+			break;
+		}
+		case 1:
+		{
+			color[0] = 25.0f / 255.0f;
+			color[1] = 7.0f / 255.0f;
+			color[2] = 26.0f / 255.0f;
+			break;
+		}
+		case 2:
+		{
+			color[0] = 9.0f / 255.0f;
+			color[1] = 1.0f / 255.0f;
+			color[2] = 47.0f / 255.0f;
+			break;
+		}
+
+		case 3:
+		{
+			color[0] = 4.0f / 255.0f;
+			color[1] = 4.0f / 255.0f;
+			color[2] = 73.0f / 255.0f;
+			break;
+		}
+		case 4:
+		{
+			color[0] = 0.0f / 255.0f;
+			color[1] = 7.0f / 255.0f;
+			color[2] = 100.0f / 255.0f;
+			break;
+		}
+		case 5:
+		{
+			color[0] = 12.0f / 255.0f;
+			color[1] = 44.0f / 255.0f;
+			color[2] = 138.0f / 255.0f;
+			break;
+		}
+		case 6:
+		{
+			color[0] = 24.0f / 255.0f;
+			color[1] = 82.0f / 255.0f;
+			color[2] = 177.0f / 255.0f;
+			break;
+		}
+		case 7:
+		{
+			color[0] = 57.0f / 255.0f;
+			color[1] = 125.0f / 255.0f;
+			color[2] = 209.0f / 255.0f;
+			break;
+		}
+		case 8:
+		{
+			color[0] = 134.0f / 255.0f;
+			color[1] = 181.0f / 255.0f;
+			color[2] = 229.0f / 255.0f;
+			break;
+		}
+		case 9:
+		{
+			color[0] = 211.0f / 255.0f;
+			color[1] = 236.0f / 255.0f;
+			color[2] = 248.0f / 255.0f;
+			break;
+		}
+		case 10:
+		{
+			color[0] = 241.0f / 255.0f;
+			color[1] = 233.0f / 255.0f;
+			color[2] = 191.0f / 255.0f;
+			break;
+		}
+		case 11:
+		{
+			color[0] = 248.0f / 255.0f;
+			color[1] = 201.0f / 255.0f;
+			color[2] = 95.0f / 255.0f;
+			break;
+		}
+		case 12:
+		{
+			color[0] = 255.0f / 255.0f;
+			color[1] = 170.0f / 255.0f;
+			color[2] = 0.0f / 255.0f;
+			break;
+		}
+		case 13:
+		{
+			color[0] = 204.0f / 255.0f;
+			color[1] = 128.0f / 255.0f;
+			color[2] = 0.0f / 255.0f;
+			break;
+		}
+		case 14:
+		{
+			color[0] = 153.0f / 255.0f;
+			color[1] = 87.0f / 255.0f;
+			color[2] = 0.0f / 255.0f;
+			break;
+		}
+		case 15:
+		{
+			color[0] = 106.0f / 255.0f;
+			color[1] = 52.0f / 255.0f;
+			color[2] = 3.0f / 255.0f;
+			break;
+		}
+	}
+
+	Result[id.xy] = color;
+}
